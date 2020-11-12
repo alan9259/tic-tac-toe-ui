@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer } from 'react';
+import { useState, useEffect, useReducer, useRef } from 'react';
 import axios from 'axios'
 
 function getDataReducer(state, action) {
@@ -13,7 +13,8 @@ function getDataReducer(state, action) {
       return {
         ...state,
         isLoading: false,
-        isError: false
+        isError: false,
+        data: action.payload,
       };
     case 'GET_FAILURE':
       return {
@@ -53,6 +54,14 @@ function getDataReducer(state, action) {
     };  
 
     getData();
+
+    // if (didMountRef.current) {
+    //   getData();
+    // }
+    // else {
+    //   didMountRef.current = true;
+    // }
+
   }, [url]);
   
   return [state, setURL];
@@ -71,7 +80,8 @@ function postDataReducer(state, action) {
       return {
         ...state,
         isLoading: false,
-        isError: false
+        isError: false,
+        data: action.payload,
       };
     case 'POST_FAILURE':
       return {
@@ -86,9 +96,10 @@ function postDataReducer(state, action) {
 
 
 export function usePostAPI(initiaURL, initialBody) {
-  const [url, setURL] = useState(initiaURL);
+  const didMountRef = useRef(false);
+  const [url] = useState(initiaURL);
   const [body, setBody] = useState(initialBody);
-
+  
   const [state, dispatch] = useReducer(postDataReducer, {
     isLoading: false,
     isError: false,
@@ -110,10 +121,16 @@ export function usePostAPI(initiaURL, initialBody) {
       }
     };  
 
-    postData();
+    if (didMountRef.current && body) {
+      postData();
+    }
+    else {
+      didMountRef.current = true;
+    }
+
   }, [url, body]);
   
-  return [state, setURL, setBody];
+  return [state, setBody];
 };
 
 
@@ -129,7 +146,8 @@ function putDataReducer(state, action) {
       return {
         ...state,
         isLoading: false,
-        isError: false
+        isError: false,
+        data: action.payload,
       };
     case 'PUT_FAILURE':
       return {
@@ -144,7 +162,7 @@ function putDataReducer(state, action) {
 
 
 export function usePutAPI(initiaURL, initialBody) {
-  const [url, setURL] = useState(initiaURL);
+  const [url] = useState(initiaURL);
   const [body, setBody] = useState(initialBody);
 
   const [state, dispatch] = useReducer(putDataReducer, {
@@ -169,9 +187,17 @@ export function usePutAPI(initiaURL, initialBody) {
     };  
 
     putData();
+
+    // if (didMountRef.current) {
+    //   putData();
+    // }
+    // else {
+    //   didMountRef.current = true;
+    // }
+    
   }, [url, body]);
   
-  return [state, setURL, setBody];
+  return [state, setBody];
 };
 
 
@@ -187,7 +213,8 @@ function deleteDataReducer(state, action) {
       return {
         ...state,
         isLoading: false,
-        isError: false
+        isError: false,
+        data: action.payload,
       };
     case 'DELETE_FAILURE':
       return {
@@ -215,7 +242,7 @@ export function useDeleteAPI(initiaURL, initialData) {
       dispatch({ type: 'DELETE_INIT' });
 
       try {
-        const response = await axios.delete(url, body);
+        const response = await axios.delete(url);
         console.log(response);
 
         dispatch({ type: 'DELETE_SUCCESS', payload: response.data });
@@ -226,7 +253,14 @@ export function useDeleteAPI(initiaURL, initialData) {
     };  
 
     deleteData();
+
+    // if (didMountRef.current) {
+    //   deleteData();
+    // }
+    // else {
+    //   didMountRef.current = true;
+    // }
   }, [url]);
   
-  return [state, setURL, setData];
+  return [state, setURL];
 };

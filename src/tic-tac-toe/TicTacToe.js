@@ -1,101 +1,138 @@
-import React,  { useState, useEffect } from 'react'
+import React,  { useState, useEffect, useRef } from 'react'
 import Board from './Board';
-import { Message, Dimmer, Loader } from 'semantic-ui-react'
+import { Input, Button, Message, Dimmer, Loader } from 'semantic-ui-react'
 import WinnerModal from './WinnerModel'
-import useNewGame, { useNextMove } from './TicTacToeAPI'
+import { useNewGame, useNextMove } from './TicTacToeAPI'
 
  function TicTacToe() {
-    const initialGame = {size: 5, board: []};
-    const [{ game, isLoadingNewGame, isErrorNewGame }, setGame, setStartNew] = useNewGame(initialGame);
-    const [{ isOver, isLoadingNextMove, isErrorNextMove }, setMove, setIsOver] = useNextMove({});
-    const [player, setPlayer] = useState(1);
+  const [player, setPlayer] = useState(1);
+  const [size, setSize] = useState(5);
+  const [isStart, setIsStart] = useState(false);
+  const [isOver, setIsOver] = useState(false);
 
-    const [isLoading, setIsLoading] = useState(isLoadingNewGame || isLoadingNextMove);
-    const [isError, setIsError] = useState(isErrorNewGame || isErrorNextMove);
+  const [game, setGame] = useNewGame(null);
+  const [move, setMove] = useNextMove(null);
 
-    useEffect(() => {
-      if (isErrorNewGame || isErrorNextMove) {
-        setIsError(true);
-      }
+  const [board, setBoard] = useState(new Array(size*size));
 
-      if (!isErrorNewGame && !isErrorNextMove) {
-        setIsError(false);
-      }
+  const [isLoading, setIsLoading] = useState(game.isLoading || move.isLoading);
+  const [isError, setIsError] = useState(game.isError || move.isError);
 
-      if (isLoadingNewGame || isLoadingNextMove) {
-        setIsLoading(true);
-      }
+  const inputSize = useRef(null);
 
-      if (!isLoadingNewGame && !isLoadingNextMove) {
-        setIsLoading(false);
-      }
-
-    }, [isErrorNewGame, isErrorNextMove, isLoadingNewGame, isLoadingNextMove])
-
-    function handleClick(id) {
-      const row = id / game.size >> 0;
-      const col = id % game.size;
-
-      const newMove = {
-        row: row,
-        col: col,
-        player: player
-      }
-
-      setMove(newMove);
-
-      let newGame = game;
-
-      newGame.board[id] = player === 1 ? 'x' : 'o';
-
-      setGame(newGame);
-      setPlayer(player === 1 ? 2 : 1);
+  useEffect(() => {
+    if (game.isError || move.isError) {
+      setIsError(true);
     }
 
-    function handleModalClose() {
-      setIsOver(false);
-    }
-
-    function handleModalNewGame() {
-      setIsOver(false);
-      setStartNew(true);
-      setPlayer(1);
-    }
-
-    function handleDismiss() {
+    if (!game.isError && !move.isError) {
       setIsError(false);
     }
-    
-    return (
-    <div>
-        {isOver && 
-        <WinnerModal 
-          open={isOver} 
-          onClose={handleModalClose}
-          onNewGame={handleModalNewGame}
-        />
-        }
 
-        {isError && 
-        <Message
-          onDismiss={handleDismiss}
-          header='Error'
-          content='There is something wrong.'
-        />
-        }
+    if (game.isLoading || move.isLoading) {
+      setIsLoading(true);
+    }
 
-        {isLoading &&
-          //<Dimmer active>
-            <Loader active>Loading</Loader>
-          //</Dimmer>
-        }
+    if (!game.isLoading && !move.isLoading) {
+      setIsLoading(false);
+    }
 
-        <Board 
-          game={game}
-          onClick={id => handleClick(id)}
-        />
-    </div>
-    );
+    if (move.data === 1 || move.data === 2) {
+      setIsOver(true)
+      move.data = 0;
+    }
+
+  }, [game, move, size])
+
+  function handleClick(id) {
+    const row = id / size >> 0;
+    const col = id % size;
+
+    const newMove = {
+      row: row,
+      col: col,
+      player: player
+    }
+
+    setMove(newMove);
+
+    let newBoard = board.slice();
+
+    newBoard[id] = player === 1 ? 'x' : 'o';
+
+    setBoard(newBoard);
+    setPlayer(player === 1 ? 2 : 1);
+  }
+
+  function handleModalClose() {
+    setIsOver(false);
+  }
+
+  function handleModalNewGame() {
+    setGame({size: size, board: []});
+
+    setBoard(new Array(size*size))
+    setIsStart(true);
+    setIsOver(false);
+    setPlayer(1);
+  }
+
+  function handleDismiss() {
+    setIsError(false);
+  }
+  
+  function handleStartGame() {
+    setGame({size: size, board: []});
+
+    setBoard(new Array(size*size));
+    setIsStart(true);
+    setIsOver(false);
+    setPlayer(1);
+  }
+
+  function handleSizeChange(e, { value }) {
+    setSize(value);
+  }
+
+  return (
+  <div>
+      {isOver && 
+      <WinnerModal 
+        open={isOver} 
+        onClose={handleModalClose}
+        onNewGame={handleModalNewGame}
+      />
+      }
+
+      {isError && 
+      <Message
+        onDismiss={handleDismiss}
+        header='Error'
+        content='There is something wrong.'
+      />
+      }
+
+      {/* {isLoading &&
+        <Dimmer active>
+          <Loader active>Loading</Loader>
+        </Dimmer>
+      } */}
+      {!isStart && 
+        <Input ref={inputSize} type='text' placeholder='Board Size...' action defaultValue={size} onChange={handleSizeChange}>
+        <input />
+        <Button type='submit' onClick={handleStartGame}>Let's Play</Button>
+      </Input>
+      }
+
+      {isStart &&
+      <Board 
+        board={board}
+        size={size}
+        onClick={id => handleClick(id)}
+      />
+      }
+  </div>
+  );
 }
 
 

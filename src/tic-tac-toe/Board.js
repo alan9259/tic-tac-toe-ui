@@ -4,8 +4,8 @@ import Square from './Square'
 import _ from "lodash";
 
 function Board(props) {
-    const rows = _.times(props.game.size, (row) => (
-        <Grid.Row columns={props.game.size}>
+    const rows = _.times(props.size, (row) => (
+        <Grid.Row columns={props.size}>
             {cols(row)}
         </Grid.Row>
     ))
@@ -13,13 +13,13 @@ function Board(props) {
     function cols(row) {
         const items = []
 
-        for (let col = 0; col < props.game.size; col ++) {
-            let id = row*props.game.size + col;
+        for (let col = 0; col < props.size; col ++) {
+            let id = row*props.size + col;
 
             items.push(
                 <Grid.Column width={1}>
                     <Square 
-                        value={props.game.board[id]}
+                        value={props.board && props.board[id]}
                         onClick={() => props.onClick(id)}
                     />
                 </Grid.Column>
