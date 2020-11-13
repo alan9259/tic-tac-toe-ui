@@ -169,7 +169,7 @@ export function usePutAPI(initiaURL, initialBody) {
     isLoading: false,
     isError: false,
     data: initialBody
-  })
+  });
 
   useEffect(() => {
     const putData = async() => {
@@ -184,7 +184,7 @@ export function usePutAPI(initiaURL, initialBody) {
         console.log(error);
         dispatch({ type: 'PUT_FAILURE' });
       }
-    };  
+    };
 
     putData();
 

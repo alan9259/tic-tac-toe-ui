@@ -1,19 +1,65 @@
-import React,  { useState, useEffect, useRef } from 'react'
+import React,  { useState, useEffect, useRef, useReducer } from 'react'
 import Board from './Board';
 import { Input, Button, Message, Dimmer, Loader } from 'semantic-ui-react'
 import WinnerModal from './WinnerModel'
 import { useNewGame, useNextMove } from './TicTacToeAPI'
 
- function TicTacToe() {
-  const [player, setPlayer] = useState(1);
-  const [size, setSize] = useState(5);
-  const [isStart, setIsStart] = useState(false);
-  const [isOver, setIsOver] = useState(false);
+function ticTacToeReducer(state, action) {
+  switch (action.type) {
+    case 'GAME_SIZE':
+      return {
+        ...state,
+        size: action.payload.size
+      };
+    case 'GAME_MOVE':
+      return {
+        ...state,
+        board: action.payload.board,
+        player: action.payload.player
+      };
+    case 'GAME_INIT':
+      return {
+        ...state,
+        isOver: false,
+        isStart: true,
+        board: new Array(state.size*state.size),
+        player: 1
+      };
+    case 'GAME_OVER':
+      return {
+        ...state,
+        isOver: true,
+        isStart: false,
+      };
+    case 'GAME_NOPE':
+      return {
+        ...state,
+        isOver: false,
+        isStart: false
+      }
+
+    default:
+
+
+  }
+}
+
+function TicTacToe() {
+  // const [player, setPlayer] = useState(1);
+  // const [size, setSize] = useState(5);
+  // const [isStart, setIsStart] = useState(false);
+  // const [isOver, setIsOver] = useState(false);
+
+  const [state, dispatch] = useReducer(ticTacToeReducer, {
+    player: 1,
+    size: 5,
+    board: new Array(25),
+    isStart: false,
+    isOver: false
+  });
 
   const [game, setGame] = useNewGame(null);
   const [move, setMove] = useNextMove(null);
-
-  const [board, setBoard] = useState(new Array(size*size));
 
   const [isLoading, setIsLoading] = useState(game.isLoading || move.isLoading);
   const [isError, setIsError] = useState(game.isError || move.isError);
@@ -38,43 +84,45 @@ import { useNewGame, useNextMove } from './TicTacToeAPI'
     }
 
     if (move.data === 1 || move.data === 2) {
-      setIsOver(true)
+      //setIsOver(true)
+      dispatch({ type: 'GAME_OVER' });
       move.data = 0;
     }
 
-  }, [game, move, size])
+  }, [game, move, state.size])
 
   function handleClick(id) {
-    const row = id / size >> 0;
-    const col = id % size;
+    const row = id / state.size >> 0;
+    const col = id % state.size;
 
     const newMove = {
       row: row,
       col: col,
-      player: player
+      player: state.player
     }
 
     setMove(newMove);
 
-    let newBoard = board.slice();
+    let newBoard = state.board.slice();
+    newBoard[id] = state.player === 1 ? 'x' : 'o';
 
-    newBoard[id] = player === 1 ? 'x' : 'o';
-
-    setBoard(newBoard);
-    setPlayer(player === 1 ? 2 : 1);
+    dispatch({
+      type: 'GAME_MOVE', 
+      payload: { 
+        player: state.player === 1 ? 2 : 1, 
+        board: newBoard
+      }
+    });
   }
 
   function handleModalClose() {
-    setIsOver(false);
+    dispatch({type: 'GAME_NOPE' });
   }
 
   function handleModalNewGame() {
-    setGame({size: size, board: []});
+    setGame({size: state.size, board: []});
 
-    setBoard(new Array(size*size))
-    setIsStart(true);
-    setIsOver(false);
-    setPlayer(1);
+    dispatch({ type: 'GAME_INIT' });
   }
 
   function handleDismiss() {
@@ -82,23 +130,23 @@ import { useNewGame, useNextMove } from './TicTacToeAPI'
   }
   
   function handleStartGame() {
-    setGame({size: size, board: []});
+    setGame({size: state.size, board: []});
 
-    setBoard(new Array(size*size));
-    setIsStart(true);
-    setIsOver(false);
-    setPlayer(1);
+    dispatch({type: 'GAME_INIT' });
   }
 
   function handleSizeChange(e, { value }) {
-    setSize(value);
+    const size = parseInt(value, 10);
+    if (isNaN(size)) { return };
+
+    dispatch({type: 'GAME_SIZE', payload: {size: size}});
   }
 
-  return (
+return (
   <div>
-      {isOver && 
+      {state.isOver && 
       <WinnerModal 
-        open={isOver} 
+        open={state.isOver} 
         onClose={handleModalClose}
         onNewGame={handleModalNewGame}
       />
@@ -117,17 +165,17 @@ import { useNewGame, useNextMove } from './TicTacToeAPI'
           <Loader active>Loading</Loader>
         </Dimmer>
       } */}
-      {!isStart && 
-        <Input ref={inputSize} type='text' placeholder='Board Size...' action defaultValue={size} onChange={handleSizeChange}>
+      {!state.isStart && 
+        <Input ref={inputSize} type='text' placeholder='Board Size...' action defaultValue={state.size} onChange={handleSizeChange}>
         <input />
         <Button type='submit' onClick={handleStartGame}>Let's Play</Button>
       </Input>
       }
 
-      {isStart &&
+      {state.isStart &&
       <Board 
-        board={board}
-        size={size}
+        board={state.board}
+        size={state.size}
         onClick={id => handleClick(id)}
       />
       }
