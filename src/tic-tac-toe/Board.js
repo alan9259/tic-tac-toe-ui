@@ -5,7 +5,7 @@ import _ from "lodash";
 
 function Board(props) {
     const rows = _.times(props.size, (row) => (
-        <Grid.Row columns={props.size}>
+        <Grid.Row columns={props.size} >
             {cols(row)}
         </Grid.Row>
     ))
