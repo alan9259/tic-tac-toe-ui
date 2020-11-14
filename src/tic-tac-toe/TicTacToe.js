@@ -114,7 +114,7 @@ return (
       <Container textAlign='center'>
         <Input floated='right' ref={inputSize} type='text' placeholder='Board Size...' action defaultValue={state.size} onChange={handleSizeChange}>
           <input />
-          <Button floated='right'  type='submit' onClick={handleStartGame} color='blue'>Let's Play</Button>
+          <Button floated='right'  type='submit' onClick={handleStartGame} color='teal'>Let's Play</Button>
         </Input>
       </Container> 
       }
